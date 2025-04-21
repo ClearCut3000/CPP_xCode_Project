@@ -1,7 +1,8 @@
-#ifndef EVENTQUEUE_H
-#define EVENTQUEUE_H
+#ifndef EVENT_QUEUE_HPP
+#define EVENT_QUEUE_HPP
 
-// Публичный интерфейс: точка входа в систему менеджера событий
-void run_event_manager();
+namespace EventManager {
+void run();
+}
 
-#endif // EVENTQUEUE_H
+#endif
