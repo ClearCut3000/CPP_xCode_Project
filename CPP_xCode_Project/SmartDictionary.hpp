@@ -1,13 +1,25 @@
-//
-//  SmartDictionary.hpp
-//  CPP_xCode_Project
-//
-//  Created by Николай Никитин on 21.04.2025.
-//
+#ifndef SMART_DICTIONARY_HPP
+#define SMART_DICTIONARY_HPP
 
-#ifndef SmartDictionary_hpp
-#define SmartDictionary_hpp
+#include <vector>
+#include <string>
 
-#include <stdio.h>
+namespace Dictionary {
 
-#endif /* SmartDictionary_hpp */
+struct WordEntry {
+  std::string word;
+  std::string translation;
+};
+
+void run();
+
+void printMenu();
+void addWord(std::vector<WordEntry>& dict, int& count);
+void findTranslation(const std::vector<WordEntry>& dict);
+void showAllWords(const std::vector<WordEntry>& dict);
+void saveToFile(const std::vector<WordEntry>& dict, const std::string& filename);
+void loadFromFile(std::vector<WordEntry>& dict, int& count, const std::string& filename);
+
+}
+
+#endif
