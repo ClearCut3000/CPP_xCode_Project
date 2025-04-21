@@ -1,99 +1,71 @@
-#include "EventQueue.hpp"  // Подключаем интерфейс
-
+#include "EventQueue.hpp"
 #include <iostream>
-#include <thread>
 #include <queue>
+#include <string>
+#include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
 #include <chrono>
-#include <string>
-#include <vector>
-#include <numeric>
 
-// Структура события
+namespace EventManager {
+
 struct Event {
-    int id;
-    std::string message;
-    std::chrono::steady_clock::time_point created_at;
+  int id;
+  std::string message;
+  std::chrono::time_point<std::chrono::steady_clock> time;
 };
 
-// Потокобезопасная очередь событий
-class EventQueue {
-private:
-    std::queue<Event> queue;
-    std::mutex mutex;
-    std::condition_variable cv;
+std::queue<Event> eventQueue;
+std::mutex queueMutex;
+std::condition_variable queueCondVar;
+std::atomic<bool> stopRequested{false};
 
-public:
-    void push(const Event& event) {
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            queue.push(event);
-        }
-        cv.notify_one();
+void producer(int intervalMs) {
+  int counter = 0;
+  while (!stopRequested) {
+    Event evt{counter++, "Event generated", std::chrono::steady_clock::now()};
+    {
+      std::lock_guard<std::mutex> lock(queueMutex);
+      eventQueue.push(evt);
     }
+    queueCondVar.notify_one();
+    std::this_thread::sleep_for(std::chrono::milliseconds(intervalMs));
+  }
+}
 
-    bool pop(Event& event, std::atomic<bool>& stop_requested) {
-        std::unique_lock<std::mutex> lock(mutex);
-        cv.wait(lock, [&]() { return !queue.empty() || stop_requested.load(); });
+void consumer() {
+  using namespace std::chrono;
+  while (!stopRequested) {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    queueCondVar.wait(lock, [] { return !eventQueue.empty() || stopRequested; });
 
-        if (!queue.empty()) {
-            event = queue.front();
-            queue.pop();
-            return true;
-        }
-        return false;
+    while (!eventQueue.empty()) {
+      Event evt = eventQueue.front();
+      eventQueue.pop();
+      lock.unlock();
+
+      auto latency = duration_cast<milliseconds>(steady_clock::now() - evt.time).count();
+      std::cout << "Обработано: ID=" << evt.id << " Msg=" << evt.message << " Latency=" << latency << "ms\n";
+
+      lock.lock();
     }
-};
+  }
+}
 
-// Основная логика, вызываемая из main
-void run_event_manager() {
-    EventQueue eventQueue;
-    std::atomic<bool> stop_requested(false);
-    std::vector<long long> latencies_ms;
+void run() {
+  stopRequested = false;
+  std::thread prod(producer, 1000);
+  std::thread cons(consumer);
 
-    std::thread producer([&]() {
-        int counter = 0;
-        while (!stop_requested.load()) {
-            Event event;
-            event.id = counter++;
-            event.message = "Event #" + std::to_string(event.id);
-            event.created_at = std::chrono::steady_clock::now();
+  std::cout << "Менеджер событий запущен. Нажмите Enter для остановки...\n";
+  std::cin.get();
 
-            eventQueue.push(event);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    });
+  stopRequested = true;
+  queueCondVar.notify_all();
+  prod.join();
+  cons.join();
 
-    std::thread consumer([&]() {
-        while (!stop_requested.load()) {
-            Event event;
-            if (eventQueue.pop(event, stop_requested)) {
-                auto now = std::chrono::steady_clock::now();
-                auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(now - event.created_at).count();
-                latencies_ms.push_back(latency);
-
-                std::cout << "[Consumer] Processed: " << event.message
-                          << " | Latency: " << latency << "ms\n";
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(150));
-            }
-        }
-    });
-
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    stop_requested.store(true);
-
-    producer.join();
-    consumer.join();
-
-    if (!latencies_ms.empty()) {
-        long long total = std::accumulate(latencies_ms.begin(), latencies_ms.end(), 0LL);
-        double avg_latency = static_cast<double>(total) / latencies_ms.size();
-        std::cout << "\nAverage latency: " << avg_latency << " ms over "
-                  << latencies_ms.size() << " events.\n";
-    } else {
-        std::cout << "\nNo events processed.\n";
-    }
+  std::cout << "Менеджер событий завершён.\n";
+}
 }
