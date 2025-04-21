@@ -11,9 +11,12 @@
 namespace EventManager {
 
 struct Event {
-  int id;
-  std::string message;
-  std::chrono::time_point<std::chrono::steady_clock> time;
+    int id;
+    std::string message;
+    std::chrono::steady_clock::time_point timestamp;
+
+    Event(int i, const std::string& msg, std::chrono::steady_clock::time_point ts)
+        : id(i), message(msg), timestamp(ts) {}
 };
 
 std::queue<Event> eventQueue;
@@ -35,37 +38,54 @@ void producer(int intervalMs) {
 }
 
 void consumer() {
-  using namespace std::chrono;
-  while (!stopRequested) {
-    std::unique_lock<std::mutex> lock(queueMutex);
-    queueCondVar.wait(lock, [] { return !eventQueue.empty() || stopRequested; });
+    while (!stopRequested) {
+        std::unique_lock<std::mutex> lock(queueMutex);
+        queueCondVar.wait(lock, [] { return !eventQueue.empty() || stopRequested; });
 
-    while (!eventQueue.empty()) {
-      Event evt = eventQueue.front();
-      eventQueue.pop();
-      lock.unlock();
+        while (!eventQueue.empty()) {
+            Event event = eventQueue.front();
+            eventQueue.pop();
+            lock.unlock();
 
-      auto latency = duration_cast<milliseconds>(steady_clock::now() - evt.time).count();
-      std::cout << "Обработано: ID=" << evt.id << " Msg=" << evt.message << " Latency=" << latency << "ms\n";
+            auto now = std::chrono::steady_clock::now();
+            auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(now - event.timestamp).count();
+            std::cout << "Обработано: ID=" << event.id
+                      << " Msg=" << event.message
+                      << " Latency=" << latency << "ms\n";
 
-      lock.lock();
+            // ⏳ ВОТ ЗДЕСЬ — эмулируем «медленного потребителя»
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+            lock.lock();
+        }
     }
-  }
 }
+
 
 void run() {
-  stopRequested = false;
-  std::thread prod(producer, 1000);
-  std::thread cons(consumer);
+    stopRequested = false;
 
-  std::cout << "Менеджер событий запущен. Нажмите Enter для остановки...\n";
-  std::cin.get();
+    std::cout << "[INFO] Запуск продюсера...\n";
+    std::thread prod(producer, 300);
 
-  stopRequested = true;
-  queueCondVar.notify_all();
-  prod.join();
-  cons.join();
+    // ⏳ Даем продюсеру накопить события
+    std::this_thread::sleep_for(std::chrono::milliseconds(3500));
 
-  std::cout << "Менеджер событий завершён.\n";
+    std::cout << "[INFO] Запуск консьюмера...\n";
+    std::thread cons(consumer);
+
+    std::cout << "\nМенеджер событий запущен. Нажмите Enter для остановки...\n";
+    std::cin.get();
+
+    // 📍 Завершаем работу
+    stopRequested = true;
+    queueCondVar.notify_all();
+
+    prod.join();
+    cons.join();
+
+    std::cout << "Менеджер событий завершён.\n";
 }
+
+
 }
