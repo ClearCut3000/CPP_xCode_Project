@@ -3,6 +3,7 @@
 #include "SmartDictionary.hpp"
 #include "Cache.hpp"
 #include "TaskScheduler.hpp"
+#include "LinkedList.hpp"
 
 
 int main() {
@@ -12,7 +13,8 @@ int main() {
     std::cout << "2. Умный словарь\n";
     std::cout << "3. Кэш\n";
     std::cout << "4. Планировщик задач\n";
-    std::cout << "5. Выход\n";
+    std::cout << "5. Linked List\n";
+    std::cout << "6. Выход\n";
     std::cout << "Выберите номер проекта: ";
 
     int choice;
@@ -24,7 +26,8 @@ int main() {
       case 2: Dictionary::run(); break;
       case 3: CacheModule::run(); break;
       case 4: TaskScheduler::run(); break;
-      case 5: std::cout << "Выход...\n"; return 0;
+      case 5: LinkedListModule::run(); break;
+      case 6: std::cout << "Выход...\n"; return 0;
       default: std::cout << "Неверный выбор!\n";
     }
   }
