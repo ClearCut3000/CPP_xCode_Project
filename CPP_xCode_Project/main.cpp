@@ -5,7 +5,7 @@
 #include "TaskScheduler.hpp"
 #include "LinkedList.hpp"
 #include "CircularBuffer.hpp"
-
+#include "LRUCache.hpp"
 
 int main() {
   while (true) {
@@ -16,7 +16,8 @@ int main() {
     std::cout << "4. Планировщик задач\n";
     std::cout << "5. Linked List\n";
     std::cout << "6. Кольцевая очередь\n";
-    std::cout << "7. Выход\n";
+    std::cout << "7. LRU-кэш\n";
+    std::cout << "8. Выход\n";
     std::cout << "Выберите номер проекта: ";
 
     int choice;
@@ -30,7 +31,8 @@ int main() {
       case 4: TaskScheduler::run(); break;
       case 5: LinkedListModule::run(); break;
       case 6: CircularBufferModule::run(); break;
-      case 7: std::cout << "Выход...\n"; return 0;
+      case 7: LRUCacheModule::run(); break;
+      case 8: std::cout << "Выход...\n"; return 0;
       default: std::cout << "Неверный выбор!\n";
     }
   }
