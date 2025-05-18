@@ -7,6 +7,7 @@
 #include "CircularBuffer.hpp"
 #include "LRUCache.hpp"
 #include "AutoCompleteTrie.hpp"
+#include "RPNCalculator.hpp"
 
 int main() {
   while (true) {
@@ -19,7 +20,8 @@ int main() {
     std::cout << "6. Кольцевая очередь\n";
     std::cout << "7. LRU-кэш\n";
     std::cout << "8. Автодополнение (Trie)\n";
-    std::cout << "9. Выход\n";
+    std::cout << "9. Калькулятор (ОПН)\n";
+    std::cout << "10. Выход\n";
     std::cout << "Выберите номер проекта: ";
 
     int choice;
@@ -35,7 +37,8 @@ int main() {
       case 6: CircularBufferModule::run(); break;
       case 7: LRUCacheModule::run(); break;
       case 8: AutoComplete::Trie().run(); break;
-      case 9: std::cout << "Выход...\n"; return 0;
+      case 9: RPN::RPNCalculator().run(); break;
+      case 10: std::cout << "Выход...\n"; return 0;
       default: std::cout << "Неверный выбор!\n";
     }
   }
