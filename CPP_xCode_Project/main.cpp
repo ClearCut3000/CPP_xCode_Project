@@ -8,6 +8,7 @@
 #include "LRUCache.hpp"
 #include "AutoCompleteTrie.hpp"
 #include "RPNCalculator.hpp"
+#include "RLECompressor.hpp"
 
 int main() {
   while (true) {
@@ -21,7 +22,8 @@ int main() {
     std::cout << "7. LRU-кэш\n";
     std::cout << "8. Автодополнение (Trie)\n";
     std::cout << "9. Калькулятор (ОПН)\n";
-    std::cout << "10. Выход\n";
+    std::cout << "10. Архиватор (RLE)\n";
+    std::cout << "11. Выход\n";
     std::cout << "Выберите номер проекта: ";
 
     int choice;
@@ -38,7 +40,66 @@ int main() {
       case 7: LRUCacheModule::run(); break;
       case 8: AutoComplete::Trie().run(); break;
       case 9: RPN::RPNCalculator().run(); break;
-      case 10: std::cout << "Выход...\n"; return 0;
+      case 10: {
+        RLE::RLECompressor compressor;
+
+        while (true) {
+          std::cout << "\n=== Архиватор (RLE) ===\n";
+          std::cout << "1. Сжать строку\n";
+          std::cout << "2. Распаковать строку\n";
+          std::cout << "3. Назад в меню\n";
+          std::cout << "Выбор: ";
+
+          int action;
+          std::cin >> action;
+          std::cin.ignore();
+
+          if (action == 3) break;
+
+          std::string input;
+          std::cout << "Введите строку: ";
+          std::getline(std::cin >> std::ws, input);
+
+          if (action == 1) {
+            // Простая проверка: если строка уже выглядит как RLE, предупредим
+            bool looksCompressed = true;
+            for (size_t i = 0; i < input.size();) {
+              if (!isdigit(input[i])) {
+                looksCompressed = false;
+                break;
+              }
+              size_t j = i;
+              while (j < input.size() && isdigit(input[j])) ++j;
+              if (j == input.size() || !isalpha(input[j])) {
+                looksCompressed = false;
+                break;
+              }
+              i = j + 1;
+            }
+
+            if (looksCompressed) {
+              std::cout << "⚠️ Строка уже выглядит как сжатая. Продолжить сжатие? (y/n): ";
+              char confirm;
+              std::cin >> confirm;
+              std::cin.ignore();
+              if (confirm != 'y' && confirm != 'Y') continue;
+            }
+
+            std::string compressed = compressor.compress(input);
+            std::cout << "Сжатая строка: " << compressed << "\n";
+
+          } else if (action == 2) {
+            std::string decompressed = compressor.decompress(input);
+            std::cout << "Результат декомпрессии: " << decompressed << "\n";
+
+          } else {
+            std::cout << "❌ Неверный выбор.\n";
+          }
+        }
+        break;
+      }
+
+      case 11: std::cout << "Выход...\n"; return 0;
       default: std::cout << "Неверный выбор!\n";
     }
   }
