@@ -9,6 +9,7 @@
 #include "AutoCompleteTrie.hpp"
 #include "RPNCalculator.hpp"
 #include "RLECompressor.hpp"
+#include "MinHeap.hpp"
 
 int main() {
   while (true) {
@@ -23,7 +24,8 @@ int main() {
     std::cout << "8. Автодополнение (Trie)\n";
     std::cout << "9. Калькулятор (ОПН)\n";
     std::cout << "10. Архиватор (RLE)\n";
-    std::cout << "11. Выход\n";
+    std::cout << "11. Мин-куча (MinHeap)\n";
+    std::cout << "12. Выход\n";
     std::cout << "Выберите номер проекта: ";
 
     int choice;
@@ -98,8 +100,8 @@ int main() {
         }
         break;
       }
-
-      case 11: std::cout << "Выход...\n"; return 0;
+      case 11: MinHeapModule::HeapCLI::run(); break;
+      case 12: std::cout << "Выход...\n"; return 0;
       default: std::cout << "Неверный выбор!\n";
     }
   }
